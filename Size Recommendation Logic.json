@@ -1,0 +1,159 @@
+{
+  "name": "Size Recommendation Logic",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\n\nconst height  = parseFloat(input.height)  || null;  // cm\nconst weight  = parseFloat(input.weight)  || null;  // kg\nconst bust    = parseFloat(input.bust)    || null;  // cm, tùy chọn\nconst waist   = parseFloat(input.waist)   || null;  // cm, tùy chọn\nconst hip     = parseFloat(input.hip)     || null;  // cm, tùy chọn\nconst category = (input.category || 'top').toLowerCase();  // top | bottom | dress\nconst gender   = (input.gender   || 'nu').toLowerCase();   // nu | nam\nconst fabric   = (input.fabric   || 'normal').toLowerCase(); // normal | stretch | denim | oversize\n\nif (!height && !weight && !bust && !waist && !hip) {\n  return [{\n    json: {\n      status: 'need_more_info',\n      message: 'Bạn ơi, để tư vấn size chính xác shop cần biết thêm chiều cao và cân nặng của bạn nhé! Bạn cho mình xin thông tin đó được không? 😊',\n      missing: ['height', 'weight']\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    status: 'ok',\n    height, weight, bust, waist, hip,\n    category, gender, fabric\n  }\n}];\n"
+      },
+      "id": "82b339ce-f6e6-4916-8530-07e833977b0b",
+      "name": "Extract Size Inputs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst sheetData = $input.all();\n\nconst customerData = $('Extract Size Inputs').first().json;\n\nif (customerData.status === 'need_more_info') {\n  return [{ json: customerData }];\n}\n\nconst { height, weight, category, gender, fabric } = customerData;\n\nfunction matchCategory(phanLoai, category, gender) {\n  const pl = phanLoai.toLowerCase();\n  const cat = (category || '').toLowerCase();\n  const gen = (gender || 'nu').toLowerCase();\n\n  if (cat === 'giay') {\n    if (gen === 'nam') return pl.includes('giày nam');\n    return pl.includes('giày nữ');\n  }\n  if (cat === 'do lot') {\n    if (gen === 'nam') return pl.includes('đồ lót nam');\n    return pl.includes('đồ lót nữ');\n  }\n\n  const fabricMap = {\n    slimfit: 'slimfit',\n    regular: 'regular fit',\n    oversized: 'oversized',\n    oversize: 'oversized'\n  };\n  const fabricKey = fabricMap[fabric] || 'regular fit';\n  return pl.includes(cat) && pl.includes(fabricKey);\n}\n\n\nconst filtered = sheetData.filter(item => {\n  const phanLoai = item.json['Phân loại'] || '';\n  return matchCategory(phanLoai, category, gender);\n});\n\nif (filtered.length === 0) {\n  return [{ json: {\n    status: 'no_match',\n    message: `Shop chưa có dữ liệu size cho sản phẩm này, bạn nhắn tin trực tiếp để được tư vấn nhé! 😊`\n  }}];\n}\n\n\nfunction scoreRow(row, h, w) {\n  const hMin = parseFloat(row['Chiều cao Min (cm)']) || 0;\n  const hMax = parseFloat(row['Chiều cao Max (cm)']) || 999;\n  const wMin = parseFloat(row['Cân nặng Min (kg)']) || 0;\n  const wMax = parseFloat(row['Cân nặng Max (kg)']) || 999;\n\n  let score = 0;\n\n  if (h !== null) {\n    if (h >= hMin && h <= hMax) score += 2;\n    else if (h > hMax) score -= 2;\n    else score -= 1;\n  }\n  if (w !== null) {\n    if (w >= wMin && w <= wMax) score += 2;\n    else if (w > wMax) score -= 2;\n    else score -= 1;\n  }\n  return score;\n}\n\nconst scored = filtered.map(item => ({\n  size: item.json['Size'],\n  score: scoreRow(item.json, height, weight),\n  ghiChu: item.json['Ghi chú tư vấn'] || ''\n})).sort((a, b) => b.score - a.score);\n\nconst best = scored[0];\nconst runnerUp = scored[1];\n\nconst confidence = best.score >= 3 ? 'cao'\n                 : best.score >= 1 ? 'trung bình'\n                 : 'thấp';\n\nreturn [{ json: {\n  status: 'success',\n  recommendedSize: best.size,\n  originalBestSize: best.size,\n  runnerUpSize: runnerUp?.size || null,\n  confidence,\n  fabricNote: '',\n  measureInfo: [height && `chiều cao ${height}cm`, weight && `cân nặng ${weight}kg`].filter(Boolean).join(', '),\n  catLabel: category,\n  gender,\n  ghiChu: best.ghiChu,\n  scores: scored.map(s => ({ size: s.size, score: s.score }))\n}}];"
+      },
+      "id": "c9e2595b-5a84-4ad5-8d66-0235ffd76010",
+      "name": "Size Chart Logic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\n\nif (d.status === 'need_more_info') {\n  return [{ json: { reply: d.message, status: 'need_more_info' } }];\n}\n\nconst { recommendedSize, originalBestSize, runnerUpSize, confidence,\n        fabricNote, measureInfo, catLabel, gender, scores } = d;\n\nconst genderWord = gender === 'nam' ? 'bạn nam' : 'bạn';\n\nlet reply = '';\n\nif (confidence === 'cao') {\n  reply = `Dựa trên thông số ${measureInfo}, shop tư vấn ${genderWord} mặc **size ${recommendedSize}**${fabricNote} cho ${catLabel} này nhé! 🎉`;\n} else if (confidence === 'trung bình') {\n  reply = `Dựa trên ${measureInfo}, shop gợi ý **size ${recommendedSize}** cho ${catLabel}.${fabricNote} Tuy nhiên vì số đo nằm gần ranh giới, ${genderWord} có thể cân nhắc thêm **size ${runnerUpSize || recommendedSize}** nếu thích mặc rộng hơn một chút nhé.`;\n} else {\n  reply = `Thông số ${measureInfo} hơi đặc biệt nên shop khó tư vấn chắc chắn. Shop tạm gợi ý **size ${recommendedSize}**, nhưng ${genderWord} cho mình xin thêm số đo vòng ngực/eo/hông để tư vấn chính xác hơn được không? 😊`;\n}\n\nif (recommendedSize !== originalBestSize) {\n  reply += `\\n\\n💡 *Lưu ý: Theo bảng size thông thường là ${originalBestSize}, nhưng do ${fabricNote.replace(' (', '').replace(')', '')}, shop đề xuất điều chỉnh xuống ${recommendedSize}.*`;\n}\n\nreturn [{\n  json: {\n    status: 'success',\n    reply,\n    recommendedSize,\n    confidence,\n    scores\n  }\n}];\n"
+      },
+      "id": "d421e654-782c-4fb3-95a9-d2739767f94d",
+      "name": "Build Size Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        0
+      ],
+      "id": "5425e513-9078-4331-9ace-29ed6ab2ed5c",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1A-WxSLFqrv_Uo3IilsSQsfX3DSTi0C7Uffx9KWhqiU8/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Trang tính1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1A-WxSLFqrv_Uo3IilsSQsfX3DSTi0C7Uffx9KWhqiU8/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        64,
+        0
+      ],
+      "id": "abddd86c-a4b7-43e8-806b-bcf7a24c99a0",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hCUmpTDsORtWLI1U",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "When clicking ‘Execute workflow’": [
+      {
+        "json": {
+          "height": 160,
+          "weight": 52,
+          "category": "áo thun",
+          "gender": "nu",
+          "fabric": "regular"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Extract Size Inputs": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Size Chart Logic": {
+      "main": [
+        [
+          {
+            "node": "Build Size Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Extract Size Inputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Size Chart Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c7474037-47ae-46be-a569-1888a909fd02",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ec2dc8ce522d74efb99c1f3e52a7681ca6275a173f9bb89f2fcf79cdff45c423"
+  },
+  "nodeGroups": [],
+  "id": "ww88OuSybtwCnJiT",
+  "tags": []
+}

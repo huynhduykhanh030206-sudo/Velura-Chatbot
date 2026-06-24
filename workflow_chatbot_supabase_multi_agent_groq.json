@@ -1,0 +1,1298 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "velura-chat",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                -1648,
+                656
+            ],
+            "id": "e9255734-f9f7-4d35-874f-24b8de223048",
+            "name": "Webhook Trigger",
+            "webhookId": "59c13be9-9aad-43c5-8e8f-44e0244c4c8c"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "chat-input",
+                            "name": "chatInput",
+                            "value": "={{ $json.body?.message || $json.body?.chatInput }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "session-id",
+                            "name": "sessionId",
+                            "value": "={{ $json.body?.sessionId || 'default' }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "chat-mode",
+                            "name": "mode",
+                            "value": "user",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                -1392,
+                656
+            ],
+            "id": "52c6e4ac-f3fd-49b2-986a-a37e5148c177",
+            "name": "Set Chat Fields"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.chatInput }}",
+                "options": {
+                    "systemMessage": "You are a strict intent classification engine for Velura Fashion Studio.\nClassify the customer's last message into exactly ONE label:\nCONSULT, PRICING, SIZE, POLICY, OTHER.\n\nDefinitions:\n- CONSULT: product advice, recommendations, style, material, color, outfit matching.\n- PRICING: price, discount, promotion, sale, cost.\n- SIZE: sizing advice, height, weight, kg, cm, fit.\n- POLICY: exchange/return/refund, shipping, delivery time, payment, deposit, showroom address, warranty.\n- OTHER: greeting, goodbye, thanks, small talk, unclear or unrelated.\n\nPriority:\n- Height/weight/kg/cm/size -> SIZE.\n- Price/gia/bao nhieu/sale -> PRICING.\n- Doi tra/hoan tien/ship/giao hang/thanh toan/showroom/bao hanh -> POLICY.\n- Style/product recommendation -> CONSULT.\n- Otherwise -> OTHER.\n\nReturn exactly one word only. No punctuation. No explanation."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                -1072,
+                656
+            ],
+            "id": "787e48d6-efef-432f-b229-72532c644ae6",
+            "name": "Router – Phân Loại Intent"
+        },
+        {
+            "parameters": {
+                "rules": {
+                    "values": [
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 1
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.output }}",
+                                        "rightValue": "CONSULT",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "contains"
+                                        },
+                                        "id": "c1"
+                                    }
+                                ],
+                                "combinator": "and"
+                            }
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 1
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.output }}",
+                                        "rightValue": "PRICING",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "contains"
+                                        },
+                                        "id": "c2"
+                                    }
+                                ],
+                                "combinator": "and"
+                            }
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 1
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.output }}",
+                                        "rightValue": "SIZE",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "contains"
+                                        },
+                                        "id": "c3"
+                                    }
+                                ],
+                                "combinator": "and"
+                            }
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 1
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.output }}",
+                                        "rightValue": "POLICY",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "contains"
+                                        },
+                                        "id": "c4"
+                                    }
+                                ],
+                                "combinator": "and"
+                            }
+                        }
+                    ]
+                },
+                "options": {
+                    "fallbackOutput": "extra"
+                }
+            },
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3,
+            "position": [
+                -656,
+                608
+            ],
+            "id": "2bb83522-c225-4e89-be65-bcf6167c340e",
+            "name": "Switch Intent"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "p1",
+                            "name": "chatInput",
+                            "value": "={{ $('Set Chat Fields').item.json.chatInput }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "p2",
+                            "name": "sessionId",
+                            "value": "={{ $('Set Chat Fields').item.json.sessionId }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "p3",
+                            "name": "mode",
+                            "value": "={{ $('Set Chat Fields').item.json.mode }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                -256,
+                -288
+            ],
+            "id": "7a4f5b66-bc45-44fe-b239-3e225084047b",
+            "name": "Pass -> Stylist"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "p1",
+                            "name": "chatInput",
+                            "value": "={{ $('Set Chat Fields').item.json.chatInput }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "p2",
+                            "name": "sessionId",
+                            "value": "={{ $('Set Chat Fields').item.json.sessionId }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "p3",
+                            "name": "mode",
+                            "value": "={{ $('Set Chat Fields').item.json.mode }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                -256,
+                320
+            ],
+            "id": "14e7863b-1721-40c1-8d79-3a2ba569f5c9",
+            "name": "Pass -> Pricing"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "p1",
+                            "name": "chatInput",
+                            "value": "={{ $('Set Chat Fields').item.json.chatInput }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "p2",
+                            "name": "sessionId",
+                            "value": "={{ $('Set Chat Fields').item.json.sessionId }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "p3",
+                            "name": "mode",
+                            "value": "={{ $('Set Chat Fields').item.json.mode }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                -256,
+                528
+            ],
+            "id": "0329534c-34c9-4ad7-9e37-5064f2442cab",
+            "name": "Pass -> Size"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "p1",
+                            "name": "chatInput",
+                            "value": "={{ $('Set Chat Fields').item.json.chatInput }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "p2",
+                            "name": "sessionId",
+                            "value": "={{ $('Set Chat Fields').item.json.sessionId }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "p3",
+                            "name": "mode",
+                            "value": "={{ $('Set Chat Fields').item.json.mode }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                -432,
+                880
+            ],
+            "id": "06ae0776-7292-4299-a98c-dee551967ac2",
+            "name": "Pass -> Policy"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "p1",
+                            "name": "chatInput",
+                            "value": "={{ $('Set Chat Fields').item.json.chatInput }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "p2",
+                            "name": "sessionId",
+                            "value": "={{ $('Set Chat Fields').item.json.sessionId }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "p3",
+                            "name": "mode",
+                            "value": "={{ $('Set Chat Fields').item.json.mode }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                -320,
+                1712
+            ],
+            "id": "4ca71d67-b8cd-4199-8814-5e0ac56aaf04",
+            "name": "Pass -> Other"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.chatInput }}",
+                "options": {
+                    "systemMessage": "🎯 Vai trò:\nEm là AI Stylist của Velura Fashion Studio, chuyên tư vấn sản phẩm thời trang, chất liệu, màu sắc và phối đồ cho anh/chị khách hàng.\n\n📚 Cách dùng dữ liệu sản phẩm:\n- Khi khách hỏi về sản phẩm, mẫu mã, chất liệu, màu sắc, outfit hoặc gợi ý phối đồ, hãy tra cứu bằng tim_san_pham trước khi trả lời.\n- Câu tìm kiếm gửi đi phải ngắn gọn, chỉ là nội dung cần tìm. Ví dụ: \"áo sơ mi trắng\", \"đầm dự tiệc\", \"quần jean baggy\", \"áo thun cotton\", \"phối đồ đi làm\".\n- Chỉ giới thiệu sản phẩm có trong kết quả tìm được. Không tự bịa tên sản phẩm, SKU, chất liệu, màu sắc hoặc giá.\n- Nếu không tìm thấy sản phẩm phù hợp, hãy nói rõ: \"Dạ hiện em chưa tìm thấy mẫu phù hợp trong dữ liệu, anh/chị có thể mô tả thêm kiểu dáng, màu sắc hoặc dịp mặc để em hỗ trợ tiếp nhé.\"\n\n⚠️ Quy tắc trả lời:\n1. Xưng \"em\" và gọi khách là \"anh/chị\". Không dùng từ \"bạn\".\n2. Khi giới thiệu sản phẩm cụ thể, luôn nhắc mã SKU nếu kết quả có mã, ví dụ: SM001, TS002, QN001.\n3. Trả lời tự nhiên, lịch sự, ngắn gọn nhưng có cảm hứng phối đồ.\n4. Không nhắc các từ kỹ thuật như tool, function, JSON, database, vector trong câu trả lời cuối.\n5. Nếu khách hỏi vừa tư vấn vừa giá, vẫn gợi ý sản phẩm trước; giá chi tiết sẽ do nhánh báo giá xử lý nếu khách hỏi rõ về giá."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                32,
+                -560
+            ],
+            "id": "dc77c122-bdb1-46d9-a9ee-4733f82cb2e5",
+            "name": "Agent Stylist"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.chatInput }}",
+                "options": {
+                    "systemMessage": "🎯 Vai trò:\nEm là chuyên viên báo giá của Velura Fashion Studio.\nNhiệm vụ của em là tra cứu và trả lời giá bán, giá khuyến mãi, ưu đãi hoặc tình trạng sale của sản phẩm.\n\n📚 Cách dùng dữ liệu giá:\n- Khi khách hỏi giá, sale, giảm giá, khuyến mãi hoặc chi phí sản phẩm, hãy tra cứu bằng tim_gia trước khi trả lời.\n- Câu tìm kiếm gửi đi phải ngắn gọn, chỉ là tên/mã/nhóm sản phẩm cần báo giá. Ví dụ: \"áo sơ mi SM001\", \"đầm dự tiệc\", \"quần jean baggy\", \"áo thun cotton\".\n- Chỉ báo giá theo kết quả tìm được. Không tự bịa hoặc ước lượng giá.\n- Nếu không tìm thấy giá chính thức, trả lời: \"Dạ sản phẩm này em chưa tìm thấy báo giá chính thức, anh/chị vui lòng liên hệ nhân viên cửa hàng để được hỗ trợ nhé.\"\n\n⚠️ Quy tắc trả lời:\n1. Xưng \"em\" và gọi khách là \"anh/chị\". Không dùng từ \"bạn\".\n2. Nếu có thông tin, trình bày rõ: Tên sản phẩm, mã SKU, giá niêm yết, giá khuyến mãi nếu có.\n3. Không nhắc các từ kỹ thuật như tool, function, JSON, database, vector trong câu trả lời cuối."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                -64,
+                0
+            ],
+            "id": "30886862-cdb3-4d45-8db4-b74f892dba67",
+            "name": "Agent Báo Giá"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.chatInput }}",
+                "options": {
+                    "systemMessage": "🎯 Persona & Role:\nBạn là trợ lý tư vấn chọn size thời trang chuyên nghiệp của Velura.\nNhiệm vụ của bạn là nhận thông số chiều cao, cân nặng, loại quần áo (áo thun, sơ mi, quần, váy đầm, áo khoác...) của khách hàng và đưa ra đề xuất size quần áo chuẩn xác nhất.\n\n📚 Quy trình tư vấn:\n1. Luôn sử dụng công cụ size_recommendation_tool để tính toán size dựa trên số đo của khách.\n2. Trích xuất các tham số từ câu nói của khách như: chiều cao (height), cân nặng (weight), phân loại đồ (category), giới tính (gender). Định dạng đầu vào gửi cho tool là một chuỗi JSON hoặc đối tượng.\n   Ví dụ khách nói: \"mình nam 1m72 nặng 65kg muốn mua sơ mi\" -> tham số gửi đi: {\"height\": 172, \"weight\": 65, \"category\": \"so mi\", \"gender\": \"nam\"}.\n3. Nhận kết quả từ công cụ và phản hồi cho khách hàng.\n\n⚠️ Quy tắc phản hồi nghiêm ngặt:\n1. Xưng hô: Xưng \"em\" và gọi khách là \"anh/chị\" lịch sự, thân thiện.\n2. Tuyệt đối KHÔNG bao giờ nhắc đến các từ kỹ thuật như \"công cụ\", \"tool\", \"size_recommendation_tool\", \"JSON\", \"tham số\" trong câu trả lời cho khách. Hãy trả lời tự nhiên như một nhân viên bán hàng thật sự.\n3. Chỉ tư vấn đúng size mà công cụ tính toán và trả về. Tuyệt đối KHÔNG tự bịa đặt, phỏng đoán hoặc tự ý đề xuất size khác (ví dụ: công cụ trả về L/XL thì tư vấn đúng L/XL, tuyệt đối không tự ý đổi thành XS/S).\n4. Giải thích ngắn gọn, dễ hiểu dựa trên lý do mà công cụ cung cấp."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                0,
+                528
+            ],
+            "id": "bcd4c291-4dab-4abf-9e04-f48955f6631f",
+            "name": "Agent Tính Size"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.chatInput }}",
+                "options": {
+                    "systemMessage": "🎯 Persona & Role:\nBạn là chuyên viên chăm sóc khách hàng của Velura Fashion Studio.\nNhiệm vụ của bạn là trả lời chính xác các câu hỏi về chính sách của shop: đổi trả, hoàn tiền, bảo hành, giao hàng, phí ship, thanh toán, đặt cọc và địa chỉ showroom.\n\n📚 Bắt buộc dùng dữ liệu chính sách:\n- Với mọi câu hỏi về chính sách, luôn tra cứu bằng công cụ tim_chinh_sach trước khi trả lời.\n- Khi gọi công cụ, chỉ truyền câu hỏi hoặc cụm từ tìm kiếm ngắn gọn của khách. Ví dụ: \"chính sách đổi trả\", \"phí ship\", \"địa chỉ showroom\", \"thanh toán khi nhận hàng\".\n- Chỉ trả lời dựa trên thông tin tìm được. Không tự bịa thời gian đổi trả, phí ship, điều kiện hoàn tiền, địa chỉ hay số điện thoại.\n- Nếu không tìm được thông tin rõ ràng, trả lời: \"Dạ hiện em chưa có thông tin chính sách chính thức về nội dung này, anh/chị vui lòng liên hệ nhân viên Velura để được hỗ trợ chính xác nhất nhé.\"\n\n⚠️ Quy tắc phản hồi:\n1. Xưng \"em\" và gọi khách là \"anh/chị\". Tuyệt đối không dùng từ \"bạn\".\n2. Trả lời ngắn gọn, lịch sự, rõ ý. Nếu khách đang đổi hàng/khiếu nại, hãy xin lỗi trước.\n3. Không nhắc các từ kỹ thuật như công cụ, tool, RAG, database, vector, JSON, function trong câu trả lời cuối.\n4. Nếu chính sách có điều kiện, liệt kê bằng gạch đầu dòng ngắn.\n5. Kết thúc bằng một câu hỏi hỗ trợ tiếp theo khi phù hợp."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                -16,
+                928
+            ],
+            "id": "98f2a9bb-dd35-4dad-8d4a-0ff3d17242e6",
+            "name": "Agent Chính Sách"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.chatInput }}",
+                "options": {
+                    "systemMessage": "🎯 Persona & Role:\nBạn là trợ lý AI Stylist của Velura.\nBạn được gọi khi khách hàng chào hỏi, hỏi các thông tin xã giao không thuộc về tư vấn sản phẩm, báo giá, size hay chính sách.\n\n⚠️ Quy tắc phản hồi:\n1. Xưng hô: Xưng \"em\" và gọi khách là \"anh/chị\".\n2. Trả lời thân thiện, vui vẻ. Giới thiệu ngắn gọn bạn là AI Stylist của Velura và có thể giúp tư vấn thời trang, báo giá, tính size hoặc xem chính sách đổi trả. Gợi ý khách đặt câu hỏi."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                -80,
+                1712
+            ],
+            "id": "c9c6e71f-9231-4522-9497-4d32e065926f",
+            "name": "Agent Trò Chuyện Chung"
+        },
+        {
+            "parameters": {
+                "contextWindowLength": 20
+            },
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1.2,
+            "position": [
+                128,
+                -272
+            ],
+            "id": "33f5d163-d3ff-420a-a23d-2d5e1a4525ba",
+            "name": "Memory Stylist"
+        },
+        {
+            "parameters": {
+                "contextWindowLength": 20
+            },
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1.2,
+            "position": [
+                64,
+                288
+            ],
+            "id": "9b6bcf71-0afe-44f5-bbd0-3b263aa4654f",
+            "name": "Memory Báo Giá"
+        },
+        {
+            "parameters": {
+                "contextWindowLength": 20
+            },
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1.2,
+            "position": [
+                16,
+                768
+            ],
+            "id": "5c0a9833-08cb-48da-a0a6-39decc6deb9d",
+            "name": "Memory Tính Size"
+        },
+        {
+            "parameters": {
+                "contextWindowLength": 20
+            },
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1.2,
+            "position": [
+                0,
+                1200
+            ],
+            "id": "1ac1758a-617b-41e5-ac9e-3cd243be4911",
+            "name": "Memory Chính Sách"
+        },
+        {
+            "parameters": {
+                "contextWindowLength": 20
+            },
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1.2,
+            "position": [
+                16,
+                1472
+            ],
+            "id": "2efbc984-4962-4a1d-9d4f-8bbd03c2bc43",
+            "name": "Memory Trò Chuyện"
+        },
+        {
+            "parameters": {},
+            "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                368,
+                -96
+            ],
+            "id": "94ad7255-cd97-4ea6-97c0-0638c3102119",
+            "name": "Google Gemini Embeddings",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "JuXxRXYLvTlYklhh",
+                    "name": "Google Gemini(PaLM) Api account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "mode": "retrieve-as-tool",
+                "toolDescription": "Search Velura products. Use a plain short Vietnamese search phrase as input, such as ao so mi trang, dam du tiec, quan jean baggy, ao thun cotton, or phoi do di lam. Returns product information including SKU, name, material, color, size, price, stock, and description.",
+                "tableName": {
+                    "__rl": true,
+                    "value": "documents",
+                    "mode": "list",
+                    "cachedResultName": "documents"
+                },
+                "topK": 6,
+                "options": {},
+                "toolName": "tim_san_pham"
+            },
+            "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+            "typeVersion": 1.3,
+            "position": [
+                256,
+                -272
+            ],
+            "id": "d12dbaf9-f458-4b06-9487-1b25ef2edef1",
+            "name": "tim_san_pham",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "F33FlPjikGv1IgbY",
+                    "name": "Supabase account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "mode": "retrieve-as-tool",
+                "toolDescription": "Search Velura price information. Use a plain short Vietnamese search phrase as input, such as ao so mi SM001, dam du tiec, quan jean baggy, ao thun cotton, gia sale. Returns listed price, promo price, SKU, product name, and discount information.",
+                "tableName": {
+                    "__rl": true,
+                    "value": "documents",
+                    "mode": "list",
+                    "cachedResultName": "documents"
+                },
+                "topK": 6,
+                "options": {},
+                "toolName": "tim_gia"
+            },
+            "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+            "typeVersion": 1.3,
+            "position": [
+                160,
+                224
+            ],
+            "id": "42132bda-70dd-4c9c-87f0-93eb594488bf",
+            "name": "tim_gia",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "F33FlPjikGv1IgbY",
+                    "name": "Supabase account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "mode": "retrieve-as-tool",
+                "toolDescription": "Search Velura official policy knowledge base for return, exchange, refund, warranty, shipping, delivery, payment, deposit, and showroom address. Use for every customer question about shop policies. Input should be a short Vietnamese search query.",
+                "tableName": {
+                    "__rl": true,
+                    "value": "documents",
+                    "mode": "list",
+                    "cachedResultName": "documents"
+                },
+                "topK": 8,
+                "options": {},
+                "toolName": "tim_chinh_sach"
+            },
+            "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+            "typeVersion": 1.3,
+            "position": [
+                208,
+                1104
+            ],
+            "id": "e083a035-27c6-4bda-af2d-a2a5451d0d50",
+            "name": "tim_chinh_sach",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "F33FlPjikGv1IgbY",
+                    "name": "Supabase account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "name": "size_recommendation_tool",
+                "description": "Tư vấn size quần áo khi biết chiều cao, cân nặng, loại trang phục, giới tính và dáng/chất liệu.",
+                "jsCode": "const height = Number($fromAI('height', 'Customer height in centimeters', 'number'));\nconst weight = Number($fromAI('weight', 'Customer weight in kilograms', 'number'));\nconst category = String($fromAI('category', 'Clothing category: ao thun, so mi, quan, dam vay, ao khoac', 'string') || '').toLowerCase();\nconst gender = String($fromAI('gender', 'Customer gender: nam or nu', 'string') || '').toLowerCase();\nconst fabric = String($fromAI('fabric', 'Fit or fabric: slimfit, regular, oversize, stretch, denim', 'string') || '').toLowerCase();\n\nif (!height || !weight) {\n  return 'Cần thêm chiều cao và cân nặng để tư vấn size chính xác.';\n}\n\nlet size = 'M';\nlet note = 'dáng tiêu chuẩn';\n\nif (weight < 48 && height < 165) size = 'S';\nelse if (weight <= 58 && height <= 170) size = 'M';\nelse if (weight <= 70 && height <= 178) size = 'L';\nelse size = 'XL';\n\nif (fabric.includes('oversize') || fabric.includes('oversized')) {\n  note = 'dáng oversize nên có thể mặc rộng thoải mái';\n} else if (fabric.includes('slim')) {\n  note = 'dáng slimfit ôm hơn, nếu thích thoải mái có thể cân nhắc tăng 1 size';\n} else if (fabric.includes('stretch')) {\n  note = 'chất co giãn nên size đề xuất sẽ vừa vặn hơn';\n}\n\nreturn `Recommended size: ${size}. Reason: chiều cao ${height}cm, cân nặng ${weight}kg, ${category || 'trang phục'}, ${gender || 'không rõ giới tính'}, ${note}.`;",
+                "specifyInputSchema": true,
+                "schemaType": "manual",
+                "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"height\": {\n      \"type\": \"number\",\n      \"description\": \"Chiều cao của khách hàng (cm)\"\n    },\n    \"weight\": {\n      \"type\": \"number\",\n      \"description\": \"Cân nặng của khách hàng (kg)\"\n    },\n    \"category\": {\n      \"type\": \"string\",\n      \"description\": \"Loại trang phục (ao thun, so mi, quan, dam vay, ao khoac)\"\n    },\n    \"gender\": {\n      \"type\": \"string\",\n      \"description\": \"Giới tính (nam, nu)\"\n    },\n    \"fabric\": {\n      \"type\": \"string\",\n      \"description\": \"Dáng / chất liệu (slimfit, regular, oversize)\"\n    }\n  },\n  \"required\": [\n    \"height\",\n    \"weight\"\n  ],\n  \"additionalProperties\": true\n}"
+            },
+            "type": "@n8n/n8n-nodes-langchain.toolCode",
+            "typeVersion": 1,
+            "position": [
+                304,
+                720
+            ],
+            "id": "62c2770f-194d-4042-bf1b-a8e03d3ea569",
+            "name": "size_recommendation_tool"
+        },
+        {
+            "parameters": {
+                "jsCode": "const inputData = $input.first() ? $input.first().json : {};\nconst outputText = inputData.output || \"\";\n\nconst setChatFieldsNode = $('Set Chat Fields').first();\nconst userMessage = setChatFieldsNode.json.chatInput || '';\nconst sessionId = setChatFieldsNode.json.sessionId || 'default';\nconst mode = setChatFieldsNode.json.mode || 'guest';\n\n// Dynamic mapper to load correct product details and real images from assets/images\nconst getProductInfoBySku = (sku) => {\n  const prefix = sku.substring(0, 2).toUpperCase();\n  const index = parseInt(sku.substring(2)) || 1;\n  \n  const catalogTemplate = {\n    \"TS\": {\n      \"name\": \"Áo thun Cotton Basic Velura #\" + index,\n      \"price\": 220000,\n      \"promo_price\": 180000,\n      \"image_url\": \"assets/images/ts_basic.png\"\n    },\n    \"SM\": {\n      \"name\": \"Áo sơ mi lụa Satin Velura #\" + index,\n      \"price\": 350000,\n      \"promo_price\": 290000,\n      \"image_url\": \"assets/images/sm_lua.png\"\n    },\n    \"QN\": {\n      \"name\": \"Quần Jeans dáng Baggy Denim #\" + index,\n      \"price\": 350000,\n      \"promo_price\": 290000,\n      \"image_url\": \"assets/images/qn_baggy.png\"\n    },\n    \"DV\": {\n      \"name\": \"Đầm voan tơ dáng dài Velura #\" + index,\n      \"price\": 380000,\n      \"promo_price\": 320000,\n      \"image_url\": \"assets/images/dv_hoanhi.png\"\n    },\n    \"AK\": {\n      \"name\": \"Áo khoác gió dù 2 lớp Velura #\" + index,\n      \"price\": 450000,\n      \"promo_price\": 380000,\n      \"image_url\": \"assets/images/ak_gio.png\"\n    }\n  };\n  \n  if (catalogTemplate[prefix]) {\n    return {\n      \"sku\": sku,\n      ...catalogTemplate[prefix]\n    };\n  }\n  return null;\n};\n\n// Tìm kiếm tất cả mã sản phẩm được nhắc tới trong phản hồi của AI\nconst skuRegex = /[A-Z]{2}\\d{3}/g;\nconst foundSkus = outputText.match(skuRegex) || [];\nconst uniqueSkus = [...new Set(foundSkus)];\n\nconst products = [];\nuniqueSkus.forEach(sku => {\n  const prod = getProductInfoBySku(sku);\n  if (prod) {\n    products.push(prod);\n  }\n});\n\n// Predict intent based on Router output\nconst routerOutput = $('Router – Phân Loại Intent').first().json.output || \"\";\nlet intent = \"Hỏi đáp chung\";\nif (routerOutput.includes(\"CONSULT\")) {\n  intent = \"Gợi ý thời trang\";\n} else if (routerOutput.includes(\"PRICING\")) {\n  intent = \"Hỏi giá\";\n} else if (routerOutput.includes(\"SIZE\")) {\n  intent = \"Hỏi size\";\n} else if (routerOutput.includes(\"POLICY\")) {\n  intent = \"Hỏi chính sách\";\n}\n\nreturn [{\n  json: {\n    text: outputText,\n    products: products,\n    logData: {\n      timestamp: new Date().toISOString(),\n      sessionId: sessionId,\n      mode: mode,\n      userMessage: userMessage,\n      botResponse: outputText,\n      intent: intent\n    }\n  }\n}];"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                864,
+                -32
+            ],
+            "id": "e6c73065-05c9-467f-bdef-6e862adcd781",
+            "name": "Post-Processor Code"
+        },
+        {
+            "parameters": {
+                "operation": "append",
+                "documentId": {
+                    "__rl": true,
+                    "value": "1Tf1PEpG6ZY4e-IdkCKrGYWJHv-NE_NImfKuxNWAHcy0",
+                    "mode": "list",
+                    "cachedResultName": "Ticket_log",
+                    "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Tf1PEpG6ZY4e-IdkCKrGYWJHv-NE_NImfKuxNWAHcy0/edit?usp=drivesdk"
+                },
+                "sheetName": {
+                    "__rl": true,
+                    "value": "gid=0",
+                    "mode": "list",
+                    "cachedResultName": "Ticket_Log",
+                    "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Tf1PEpG6ZY4e-IdkCKrGYWJHv-NE_NImfKuxNWAHcy0/edit#gid=0"
+                },
+                "columns": {
+                    "mappingMode": "defineBelow",
+                    "value": {
+                        "timestamp": "={{ $json.logData.timestamp }}",
+                        "sessionId": "={{ $json.logData.sessionId }}",
+                        "mode": "={{ $json.logData.mode }}",
+                        "userMessage": "={{ $json.logData.userMessage }}",
+                        "botResponse": "={{ $json.logData.botResponse }}"
+                    },
+                    "matchingColumns": [],
+                    "schema": [
+                        {
+                            "id": "timestamp",
+                            "displayName": "timestamp",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string"
+                        },
+                        {
+                            "id": "sessionId",
+                            "displayName": "sessionId",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string"
+                        },
+                        {
+                            "id": "mode",
+                            "displayName": "mode",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string"
+                        },
+                        {
+                            "id": "userMessage",
+                            "displayName": "userMessage",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string"
+                        },
+                        {
+                            "id": "botResponse",
+                            "displayName": "botResponse",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 4.5,
+            "position": [
+                1232,
+                -304
+            ],
+            "id": "dc92ab03-1ecb-42c2-b5d8-33e744995a18",
+            "name": "Log to Google Sheets",
+            "credentials": {
+                "googleSheetsOAuth2Api": {
+                    "id": "HYAk64tsx90AoCfJ",
+                    "name": "Google Sheets OAuth2 API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ JSON.stringify({ \"text\": $json.text, \"products\": $json.products }) }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                1584,
+                208
+            ],
+            "id": "c1cbb589-5cb7-4838-a8d6-ddef53e89910",
+            "name": "Respond to Webhook"
+        },
+        {
+            "parameters": {
+                "model": "llama-3.3-70b-versatile",
+                "options": {
+                    "temperature": 0
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+            "typeVersion": 1,
+            "position": [
+                -16,
+                -304
+            ],
+            "id": "451fe3e0-9116-4062-b4cb-931f85c1f4ed",
+            "name": "Groq Chat Model",
+            "credentials": {
+                "groqApi": {
+                    "id": "PiLPcy57jU1zjXZh",
+                    "name": "Groq account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "model": "llama-3.3-70b-versatile",
+                "options": {
+                    "temperature": 0
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+            "typeVersion": 1,
+            "position": [
+                -80,
+                272
+            ],
+            "id": "82eaf0bd-fdda-49b6-b279-c08c2a144e0a",
+            "name": "Groq Chat Model1",
+            "credentials": {
+                "groqApi": {
+                    "id": "GoBqdxJu7FxgLE2N",
+                    "name": "Groq account 2"
+                }
+            }
+        },
+        {
+            "parameters": {},
+            "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                288,
+                384
+            ],
+            "id": "9289c917-19ff-410d-8bfd-f50b9882fb87",
+            "name": "Google Gemini Embeddings1",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "uaivDHGRJ31qHUT8",
+                    "name": "Google Gemini(PaLM) Api account 2"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "model": "llama-3.3-70b-versatile",
+                "options": {
+                    "temperature": 0
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+            "typeVersion": 1,
+            "position": [
+                -192,
+                1216
+            ],
+            "id": "75fbc55d-83be-4962-88c5-30b1cd73418f",
+            "name": "Groq Chat Model2",
+            "credentials": {
+                "groqApi": {
+                    "id": "GoBqdxJu7FxgLE2N",
+                    "name": "Groq account 2"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "model": "llama-3.3-70b-versatile",
+                "options": {
+                    "temperature": 0
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+            "typeVersion": 1,
+            "position": [
+                -176,
+                800
+            ],
+            "id": "4293da41-ab79-4e2e-95a0-545a74fbb144",
+            "name": "Groq Chat Model3",
+            "credentials": {
+                "groqApi": {
+                    "id": "JhzTaNkUopqROdmN",
+                    "name": "Groq account 3"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "options": {},
+                "model": "llama-3.1-8b-instant"
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+            "typeVersion": 1,
+            "position": [
+                -48,
+                2032
+            ],
+            "id": "d0bda547-f3bd-4133-8d09-ea8abffe4098",
+            "name": "Groq Chat Model4",
+            "credentials": {
+                "groqApi": {
+                    "id": "yBEgmcBF1HvuckIO",
+                    "name": "Groq account 4"
+                }
+            }
+        },
+        {
+            "parameters": {},
+            "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                192,
+                1328
+            ],
+            "id": "c90d5507-a82b-43fc-8e56-46effdfd124e",
+            "name": "Google Gemini Embeddings2",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "Ks882co1zrl75PyB",
+                    "name": "Google Gemini(PaLM) Api account 3"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "model": "llama-3.3-70b-versatile",
+                "options": {
+                    "temperature": 0
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+            "typeVersion": 1,
+            "position": [
+                -1072,
+                864
+            ],
+            "id": "a1d01815-5bbf-43e2-99ec-15c492f2f1f7",
+            "name": "Groq Chat Model5",
+            "credentials": {
+                "groqApi": {
+                    "id": "GebtOB19627D5SGr",
+                    "name": "Groq account 5"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Webhook Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Set Chat Fields",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Set Chat Fields": {
+            "main": [
+                [
+                    {
+                        "node": "Router – Phân Loại Intent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Router – Phân Loại Intent": {
+            "main": [
+                [
+                    {
+                        "node": "Switch Intent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Switch Intent": {
+            "main": [
+                [
+                    {
+                        "node": "Pass -> Stylist",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Pass -> Pricing",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Pass -> Size",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Pass -> Policy",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Pass -> Other",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Pass -> Stylist": {
+            "main": [
+                [
+                    {
+                        "node": "Agent Stylist",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Pass -> Pricing": {
+            "main": [
+                [
+                    {
+                        "node": "Agent Báo Giá",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Pass -> Size": {
+            "main": [
+                [
+                    {
+                        "node": "Agent Tính Size",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Pass -> Policy": {
+            "main": [
+                [
+                    {
+                        "node": "Agent Chính Sách",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Pass -> Other": {
+            "main": [
+                [
+                    {
+                        "node": "Agent Trò Chuyện Chung",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agent Stylist": {
+            "main": [
+                [
+                    {
+                        "node": "Post-Processor Code",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agent Báo Giá": {
+            "main": [
+                [
+                    {
+                        "node": "Post-Processor Code",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agent Tính Size": {
+            "main": [
+                [
+                    {
+                        "node": "Post-Processor Code",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agent Chính Sách": {
+            "main": [
+                [
+                    {
+                        "node": "Post-Processor Code",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agent Trò Chuyện Chung": {
+            "main": [
+                [
+                    {
+                        "node": "Post-Processor Code",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Memory Stylist": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "Agent Stylist",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Memory Báo Giá": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "Agent Báo Giá",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Memory Tính Size": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "Agent Tính Size",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Memory Chính Sách": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "Agent Chính Sách",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Memory Trò Chuyện": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "Agent Trò Chuyện Chung",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Embeddings": {
+            "ai_embedding": [
+                [
+                    {
+                        "node": "tim_san_pham",
+                        "type": "ai_embedding",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "tim_gia": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "Agent Báo Giá",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "tim_chinh_sach": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "Agent Chính Sách",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "size_recommendation_tool": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "Agent Tính Size",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Post-Processor Code": {
+            "main": [
+                [
+                    {
+                        "node": "Log to Google Sheets",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Groq Chat Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Agent Stylist",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Groq Chat Model1": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Agent Báo Giá",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Embeddings1": {
+            "ai_embedding": [
+                [
+                    {
+                        "node": "tim_gia",
+                        "type": "ai_embedding",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Groq Chat Model2": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Agent Chính Sách",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Groq Chat Model3": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Agent Tính Size",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Groq Chat Model4": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Agent Trò Chuyện Chung",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Embeddings2": {
+            "ai_embedding": [
+                [
+                    {
+                        "node": "tim_chinh_sach",
+                        "type": "ai_embedding",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Groq Chat Model5": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Router – Phân Loại Intent",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "1fc9f89c108e7b74b3ff8b12b1f12a37e94cbef445436cb38af0e65ffc9352c9"
+    }
+}

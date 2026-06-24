@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Stylist Chatbot — Velura</title>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Playfair+Display:wght@500;600&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="page-shell">
+    <!-- SITE HEADER -->
+    <header class="site-header">
+      <div class="container">
+        <div class="site-header__top">
+          <a href="#" class="site-header__logo">
+            <span class="brand-text">Velura</span>
+          </a>
+
+          <div class="site-header__actions">
+            <button class="icon-btn" type="button" aria-label="Yêu thích">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+            <button class="icon-btn" type="button" aria-label="Giỏ hàng">
+              <i class="fa-solid fa-bag-shopping"></i>
+              <span class="cart-badge">3</span>
+            </button>
+            <a class="icon-btn" href="#" aria-label="Tài khoản">
+              <i class="fa-regular fa-user"></i>
+            </a>
+          </div>
+        </div>
+
+        <nav class="site-header__nav" aria-label="Chính">
+          <a href="#">Trang chủ</a>
+          <a href="#">Sản phẩm</a>
+          <a href="#">Gợi ý AI</a>
+          <a href="#" class="is-active">Chatbot AI</a>
+          <a href="#">Blog</a>
+          <a href="#">Về chúng tôi</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- MAIN CHATBOT PAGE CONTENT -->
+    <main>
+      <div class="chatbot-page">
+        <!-- Sidebar for Recommendations -->
+        <aside class="chatbot-page__sidebar">
+          <h3 class="chatbot-sidebar-title">Gợi ý sản phẩm</h3>
+          <div class="chatbot-recommendations js-chatbot-recommendations">
+            <!-- Rendered dynamically via JavaScript from n8n -->
+            <div class="chatbot-recommendations--empty">Chưa có gợi ý phong cách cho bạn. Hãy trò chuyện với AI Stylist
+              hoặc chuyển sang User Mode để xem gợi ý cá nhân hóa!</div>
+          </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <div class="chatbot-page__main">
+          <div class="chatbot-box chatbot-box--page">
+            <div class="chatbot-header">
+              <div class="chatbot-header__info">
+                <div class="chatbot-header__avatar">
+                  <div class="avatar-fallback"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                  <span class="chatbot-header__status"></span>
+                </div>
+                <div>
+                  <h4 class="chatbot-header__title">AI Stylist — Velura</h4>
+                  <span class="chatbot-header__desc">Trực tuyến</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="chatbot-messages" id="chatbot-messages">
+              <!-- Welcome message rendered dynamically -->
+            </div>
+
+            <!-- Typing Indicator -->
+            <div class="typing-indicator" id="typing-indicator">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+
+            <!-- Quick Questions Row -->
+            <div class="quick-questions-row" id="quick-questions-row">
+              <button class="quick-q-btn" data-question="Shop có áo sơ mi SM001 không?">Áo sơ mi SM001?</button>
+              <button class="quick-q-btn" data-question="Mình cao 1m72 nặng 64kg thì mặc size gì?">Tư vấn chọn
+                size</button>
+              <button class="quick-q-btn" data-question="Chính sách đổi trả hàng như thế nào?">Chính sách đổi
+                trả</button>
+            </div>
+
+            <form class="chatbot-input-area js-chatbot-form" id="chat-form">
+              <input class="chatbot-input js-chatbot-input" id="chat-input" type="text" placeholder="Viết tin nhắn..."
+                aria-label="Nội dung chat" required autocomplete="off" />
+              <button class="chatbot-send-btn" type="submit" aria-label="Gửi tin nhắn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- SITE FOOTER -->
+    <footer class="site-footer">
+      <div class="container site-footer__inner">
+        <div class="site-footer__grid">
+          <div class="site-footer__brand">
+            <p class="font-display">Velura</p>
+            <p>Thời trang thông minh cho phái đẹp hiện đại</p>
+            <div class="site-footer__social">
+              <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+              <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            </div>
+          </div>
+          <div>
+            <h4>Liên kết nhanh</h4>
+            <ul>
+              <li><a href="#">Trang chủ</a></li>
+              <li><a href="#">Sản phẩm</a></li>
+              <li><a href="#">Blog</a></li>
+              <li><a href="#">Về chúng tôi</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Hỗ trợ</h4>
+            <ul>
+              <li><a href="#">Đơn hàng của tôi</a></li>
+              <li><a href="#">Trả hàng & hoàn tiền</a></li>
+              <li><a href="#">Câu hỏi thường gặp</a></li>
+            </ul>
+          </div>
+        </div>
+        <p class="site-footer__bottom">&copy; 2026 Velura. Bản quyền thuộc về Velura Fashion.</p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
