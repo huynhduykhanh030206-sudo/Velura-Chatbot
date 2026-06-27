@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     var typingIndicator = document.getElementById("typing-indicator");
 
     // Configuration: n8n local webhook URL for Gemini + RAG
-    const N8N_WEBHOOK_URL = 'https://quynhtrandm.app.n8n.cloud/webhook/velura-chat';  //Thay đường này khi đã hoàn thiện n8n
+    const N8N_WEBHOOK_URL = 'https://satiable-hazelnut-vending.ngrok-free.dev/webhook-test/velura-chat';  //Thay đường này khi đã hoàn thiện n8n
 
     var currentMode = "user";
     var sessionIds = {
